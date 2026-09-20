@@ -6,6 +6,12 @@ Modified build of [eliwoahzja/Space](https://github.com/eliwoahzja/Space)
 Final artifact: `public/ethnir-space-v2.4.0.apk` (signed, zipaligned, ~17.6 MB)
 Rebuild pipeline: `scripts/ethnir-mod.sh` (idempotent)
 
+## Install-over compatibility
+This is **not a new app** — same package (`com.gspace.android`) and signed with
+the **same AOSP testkey** (`SHA256 A4:0D:A8:0A:…:F5:DC`) as prior Space builds,
+so it installs directly **over** the original Space v2.3.1 and any earlier
+rebuilt version (versionCode 50 → 51). No uninstall, no data loss.
+
 ## What was changed
 
 ### 1. Rename
@@ -38,8 +44,9 @@ dispatch helpers keep the UI flow intact — no NPEs, splash proceeds instantly.
 - Decoded: apktool 3.0.3 (matches the decode in `apktool.yml`).
 - Rebuilt with the system aapt/aapt2 from apktool 2.5 (2020) — too old for
   this APK (arsc overlap errors); use `/tmp/apktool.jar` v3.0.3 as in the script.
-- `zipalign -f -p 4`, signed with a generated key (`ethnir.keystore`,
-  store/key pass `ethnir123`). **Regenerate a private key for production.**
+- `zipalign -f -p 4`, signed with the **AOSP testkey** (`testkey.pk8` /
+  `testkey.x509.pem` in the repo root) — the same key prior Space builds used,
+  which is what makes over-install work. Don't switch keys, or the chain breaks.
 
 ## Rebuilding
 ```bash
@@ -47,7 +54,8 @@ bash scripts/ethnir-mod.sh   # idempotent; safe to re-run
 ```
 
 ## Verification performed
-- `apksigner verify` → OK.
+- `apksigner verify` → OK; cert SHA256 matches the original chain:
+  `A4:0D:A8:0A:59:D1:70:CA:A9:50:CF:15:C1:8C:45:4D:47:A3:9B:26:98:9D:8B:64:0E:CD:74:5B:A7:1B:F5:DC`.
 - Badge/label: `aapt dump badging` shows `Ethnir - Space` in all locales.
 - Re-decoded the signed APK and confirmed in smali:
   `startWatch()` = `return-void`, TTAdNative getter = `const/4 v0, 0x0`,
