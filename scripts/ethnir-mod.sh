@@ -150,22 +150,18 @@ print("  ok: WatchDog.startWatch disabled")
 PYEOF
 
 # ============ 4. REBUILD / SIGN ============
-say "Rebuilding APK with apktool"
 say "Rebuilding APK with apktool 3.0.3 (bundled aapt2)"
 java -Xmx2g -jar /tmp/apktool.jar b -f -j 2 -o /tmp/ethnir_unsigned.apk .
 
 say "Zipaligning"
 zipalign -f -p 4 /tmp/ethnir_unsigned.apk /tmp/ethnir_aligned.apk
 
-say "Signing"
-if [ ! -f /tmp/ethnir.keystore ]; then
-  keytool -genkeypair -keystore /tmp/ethnir.keystore -alias ethnir \
-    -keyalg RSA -keysize 2048 -validity 10000 \
-    -storepass ethnir123 -keypass ethnir123 \
-    -dname "CN=Ethnir Space, OU=Ethnir, O=Ethnir, L=Internet, ST=Internet, C=US" 2>/dev/null
-fi
-apksigner sign --ks /tmp/ethnir.keystore --ks-pass pass:ethnir123 \
-  --key-pass pass:ethnir123 --out /tmp/ethnir-signed.apk /tmp/ethnir_aligned.apk
+say "Signing with AOSP testkey (matches prior Space builds -> install-over works)"
+# Prior eliwoahzja/Space builds are signed with the AOSP testkey
+# (sha256 A4:0D:A8:0A:...:F5:DC). Reusing it keeps the signature chain
+# intact so this APK installs over previous versions of the same app.
+apksigner sign --key ../testkey.pk8 --cert ../testkey.x509.pem \
+  --out /tmp/ethnir-signed.apk /tmp/ethnir_aligned.apk
 
 say "Verifying signature"
 apksigner verify /tmp/ethnir-signed.apk && echo "  signature OK"
